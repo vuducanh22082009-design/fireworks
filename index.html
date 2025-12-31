@@ -141,6 +141,85 @@
             text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
             pointer-events: none;
         }
+
+        /* Wish message container */
+        #wishMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+            perspective: 1000px;
+        }
+
+        #wishMessage.show {
+            opacity: 1;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        /* Notebook paper background */
+        .wish-paper {
+            background: rgba(255, 250, 240, 0.95);
+            padding: 40px 50px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            max-width: 600px;
+            background-image: 
+                repeating-linear-gradient(
+                    transparent,
+                    transparent 29px,
+                    #e0d5c7 29px,
+                    #e0d5c7 30px
+                );
+            background-size: 100% 30px;
+            border-left: 3px solid #d4a574;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .wish-paper.flipping {
+            animation: flipPage 0.6s ease-in-out;
+        }
+
+        @keyframes flipPage {
+            0% {
+                transform: rotateY(0deg);
+            }
+            50% {
+                transform: rotateY(90deg);
+            }
+            100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        .wish-text {
+            font-size: 22px;
+            color: #2c3e50;
+            line-height: 30px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            backface-visibility: hidden;
+        }
+
+        /* Hint text */
+        .click-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -152,6 +231,14 @@
 
     <!-- Credit text -->
     <div id="creditText">code by Đức Anh</div>
+
+    <!-- Wish Message -->
+    <div id="wishMessage">
+        <div class="wish-paper" id="wishPaper">
+            <div class="wish-text" id="wishText"></div>
+            <div class="click-hint">👆 Click để lật trang</div>
+        </div>
+    </div>
 
     <!-- PIN Overlay -->
     <div id="pinOverlay">
@@ -401,18 +488,18 @@
                     const angleStep = (Math.PI * 2) / particleCount;
                     for (let i = 0; i < particleCount; i++) {
                         const angle = angleStep * i;
-                        const speed = Math.random() * 5 + 2;
+                        const speed = Math.random() * 6 + 3;
                         pattern.push({ 
-                            x: Math.cos(angle) * speed * 7.5, 
-                            y: Math.sin(angle) * speed * 7.5 
+                            x: Math.cos(angle) * speed * 10, 
+                            y: Math.sin(angle) * speed * 10 
                         });
                     }
                 }
 
                 pattern.forEach(point => {
                     const velocity = {
-                        x: point.x / 20,
-                        y: point.y / 20
+                        x: point.x / 16,
+                        y: point.y / 16
                     };
                     
                     const hueVariation = this.hue + (Math.random() * 60 - 30);
@@ -459,6 +546,82 @@
             'rgba(255, 182, 193, 0.9)',
             'rgba(173, 216, 230, 0.9)'
         ];
+
+        // ===== WISH MESSAGES =====
+        const wishMessages = [
+            'Chúc bạn năm mới 2026 luôn khỏe mạnh, vui vẻ, công việc thuận lợi và mọi dự định đều suôn sẻ.',
+            'Năm mới đến rồi, mong bạn bớt lo âu, thêm may mắn và luôn giữ được nụ cười trên môi.',
+            'Happy New Year! May all your dreams come true in 2026.'
+        ];
+        let wishIndex = 0;
+        let wishStarted = false;
+        let autoWishInterval;
+
+        function flipToNextWish() {
+            const wishContainer = document.getElementById('wishMessage');
+            const wishPaper = document.getElementById('wishPaper');
+            const wishText = document.getElementById('wishText');
+            
+            if (!wishContainer.classList.contains('show')) return;
+            
+            // Add flipping animation
+            wishPaper.classList.add('flipping');
+            
+            // Change text at middle of flip
+            setTimeout(() => {
+                wishIndex = (wishIndex + 1) % wishMessages.length;
+                wishText.textContent = wishMessages[wishIndex];
+            }, 300);
+            
+            // Remove animation class
+            setTimeout(() => {
+                wishPaper.classList.remove('flipping');
+            }, 600);
+        }
+
+        function showWishMessage() {
+            const wishContainer = document.getElementById('wishMessage');
+            const wishText = document.getElementById('wishText');
+            
+            // Fade out
+            wishContainer.classList.remove('show');
+            
+            setTimeout(() => {
+                // Update text
+                wishText.textContent = wishMessages[wishIndex];
+                wishIndex = (wishIndex + 1) % wishMessages.length;
+                
+                // Fade in
+                wishContainer.classList.add('show');
+                
+                // Auto flip every 5 seconds
+                if (autoWishInterval) clearInterval(autoWishInterval);
+                autoWishInterval = setInterval(() => {
+                    flipToNextWish();
+                }, 5000);
+            }, 1000);
+        }
+
+        function startWishMessages() {
+            if (!wishStarted) {
+                wishStarted = true;
+                setTimeout(() => {
+                    showWishMessage();
+                }, 40000);
+            }
+        }
+
+        // Add click event to flip page manually
+        document.getElementById('wishMessage').addEventListener('click', () => {
+            flipToNextWish();
+            // Reset auto flip timer
+            if (autoWishInterval) {
+                clearInterval(autoWishInterval);
+                autoWishInterval = setInterval(() => {
+                    flipToNextWish();
+                }, 5000);
+            }
+        });
 
         function createTextEffect() {
             const textEl = document.createElement('div');
@@ -524,6 +687,7 @@
             if (!animationStarted) {
                 animationStarted = true;
                 startTextEffects();
+                startWishMessages();
             }
         }
 
@@ -553,6 +717,21 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+        });
+
+        // ===== CLICK TO CREATE FIREWORK =====
+        canvas.addEventListener('click', (e) => {
+            if (!isUnlocked) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Tạo pháo hoa nổ tức thì tại vị trí click
+            const clickFirework = new Firework(x, y);
+            clickFirework.y = y; // Set vị trí Y ngay tại chỗ click
+            clickFirework.explode(); // Nổ ngay lập tức
+            fireworks.push(clickFirework);
         });
 
         // Start animation
