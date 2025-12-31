@@ -17,19 +17,14 @@
             font-family: 'Arial', sans-serif;
         }
 
-        /* Background image */
+        /* Background gradient */
         #background {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #0a0a2e;
-            background-image: url('./background.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            filter: brightness(0.7);
+            background: linear-gradient(to bottom, #0a0a2e 0%, #1a1a3e 50%, #0a0a2e 100%);
             z-index: 1;
         }
 
@@ -170,9 +165,12 @@
         <div class="pin-error" id="pinError">Sai mã PIN! Thử lại nhé 🎆</div>
     </div>
 
-    <!-- Audio -->
+    <!-- Audio files -->
     <audio id="backgroundMusic" loop>
         <source src="nhac.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="additionalMusic" loop>
+        <source src="music.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -184,6 +182,7 @@
 
         // ===== AUDIO SETUP =====
         const audio = document.getElementById('backgroundMusic');
+        const audio2 = document.getElementById('additionalMusic');
         let isUnlocked = false;
 
         // ===== PIN VALIDATION =====
@@ -241,8 +240,9 @@
                     pinOverlay.classList.add('hidden');
                     isUnlocked = true;
                     startFireworks();
-                    // Tự động phát nhạc
-                    audio.play().catch(err => console.log('Audio play failed:', err));
+                    // Tự động phát cả 2 file nhạc
+                    audio.play().catch(err => console.log('Audio 1 play failed:', err));
+                    audio2.play().catch(err => console.log('Audio 2 play failed:', err));
                 }, 300);
             } else {
                 // Sai PIN
@@ -267,24 +267,17 @@
                 this.color = color;
                 this.velocity = velocity;
                 this.alpha = 1;
-                this.decay = Math.random() * 0.015 + 0.015; // Tốc độ mờ dần
-                this.gravity = 0.05; // Trọng lực
-                this.friction = 0.98; // Ma sát không khí
+                this.decay = Math.random() * 0.008 + 0.008;
+                this.gravity = 0.03;
+                this.friction = 0.99;
             }
 
             update() {
-                // Áp dụng ma sát
                 this.velocity.x *= this.friction;
                 this.velocity.y *= this.friction;
-                
-                // Áp dụng trọng lực
                 this.velocity.y += this.gravity;
-                
-                // Cập nhật vị trí
                 this.x += this.velocity.x;
                 this.y += this.velocity.y;
-                
-                // Giảm độ sáng
                 this.alpha -= this.decay;
             }
 
@@ -293,13 +286,12 @@
                 ctx.globalAlpha = this.alpha;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Thêm hào quang
-                ctx.globalAlpha = this.alpha * 0.3;
+                ctx.globalAlpha = this.alpha * 0.2;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
@@ -312,34 +304,30 @@
                 this.y = canvas.height;
                 this.targetY = targetY;
                 this.velocity = {
-                    x: (Math.random() - 0.5) * 2,
-                    y: -Math.random() * 8 - 12 // Tốc độ bắn lên
+                    x: (Math.random() - 0.5) * 1.5,
+                    y: -Math.random() * 4 - 6
                 };
                 this.exploded = false;
                 this.particles = [];
                 this.trail = [];
                 this.hue = Math.random() * 360;
-                // Random chọn hình dạng
                 this.shapes = ['circle', 'heart', '2026', 'LOVE'];
                 this.shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
             }
 
             update() {
                 if (!this.exploded) {
-                    // Pháo đang bay lên
                     this.trail.push({ x: this.x, y: this.y, alpha: 1 });
                     if (this.trail.length > 10) this.trail.shift();
                     
-                    this.velocity.y += 0.15; // Trọng lực khi bay lên
+                    this.velocity.y += 0.08;
                     this.x += this.velocity.x;
                     this.y += this.velocity.y;
                     
-                    // Kiểm tra đến đích hoặc bắt đầu rơi
                     if (this.y <= this.targetY || this.velocity.y >= 0) {
                         this.explode();
                     }
                 } else {
-                    // Cập nhật các hạt nổ
                     this.particles.forEach((particle, index) => {
                         particle.update();
                         if (particle.alpha <= 0) {
@@ -348,11 +336,9 @@
                     });
                 }
                 
-                // Cập nhật vệt khói
                 this.trail.forEach(t => t.alpha -= 0.1);
             }
 
-            // Tạo pattern hình trái tim
             createHeartPattern() {
                 const points = [];
                 const size = 50;
@@ -364,11 +350,9 @@
                 return points;
             }
 
-            // Tạo pattern số 2026
             create2026Pattern() {
                 const points = [];
                 const scale = 3;
-                // Định nghĩa các điểm tạo số 2026 (đơn giản hóa)
                 const patterns = {
                     '2': [[-2,4],[-1,4],[0,4],[1,4],[1,3],[1,2],[0,1],[-1,1],[-2,0],[-2,-1],[-1,-2],[0,-2],[1,-2],[1,-3],[1,-4]],
                     '0': [[-1,4],[0,4],[1,4],[2,3],[2,2],[2,1],[2,0],[2,-1],[2,-2],[1,-3],[0,-3],[-1,-3],[-2,-2],[-2,-1],[-2,0],[-2,1],[-2,2],[-1,3]],
@@ -384,7 +368,6 @@
                 return points;
             }
 
-            // Tạo pattern chữ LOVE
             createLOVEPattern() {
                 const points = [];
                 const scale = 3.5;
@@ -407,7 +390,6 @@
                 this.exploded = true;
                 let pattern = [];
 
-                // Chọn pattern theo shape
                 if (this.shape === 'heart') {
                     pattern = this.createHeartPattern();
                 } else if (this.shape === '2026') {
@@ -415,24 +397,22 @@
                 } else if (this.shape === 'LOVE') {
                     pattern = this.createLOVEPattern();
                 } else {
-                    // Hình tròn mặc định
                     const particleCount = 100 + Math.random() * 100;
                     const angleStep = (Math.PI * 2) / particleCount;
                     for (let i = 0; i < particleCount; i++) {
                         const angle = angleStep * i;
-                        const speed = Math.random() * 6 + 2;
+                        const speed = Math.random() * 5 + 2;
                         pattern.push({ 
-                            x: Math.cos(angle) * speed * 10, 
-                            y: Math.sin(angle) * speed * 10 
+                            x: Math.cos(angle) * speed * 7.5, 
+                            y: Math.sin(angle) * speed * 7.5 
                         });
                     }
                 }
 
-                // Tạo particles từ pattern
                 pattern.forEach(point => {
                     const velocity = {
-                        x: point.x / 15,
-                        y: point.y / 15
+                        x: point.x / 20,
+                        y: point.y / 20
                     };
                     
                     const hueVariation = this.hue + (Math.random() * 60 - 30);
@@ -444,7 +424,6 @@
 
             draw() {
                 if (!this.exploded) {
-                    // Vẽ vệt pháo bay lên
                     this.trail.forEach((point, index) => {
                         ctx.save();
                         ctx.globalAlpha = point.alpha;
@@ -456,7 +435,6 @@
                         ctx.restore();
                     });
                     
-                    // Vẽ quả pháo
                     ctx.save();
                     ctx.fillStyle = `hsl(${this.hue}, 100%, 70%)`;
                     ctx.beginPath();
@@ -464,7 +442,6 @@
                     ctx.fill();
                     ctx.restore();
                 } else {
-                    // Vẽ các hạt nổ
                     this.particles.forEach(particle => particle.draw());
                 }
             }
@@ -489,18 +466,16 @@
             textEl.textContent = texts[Math.floor(Math.random() * texts.length)];
             textEl.style.color = textColors[Math.floor(Math.random() * textColors.length)];
             
-            // Vị trí ngẫu nhiên trên màn hình (tránh mép quá)
-            const left = 15 + Math.random() * 70; // 15-85% màn hình
-            const top = 20 + Math.random() * 60;  // 20-80% màn hình
+            const left = 15 + Math.random() * 70;
+            const top = 20 + Math.random() * 60;
             textEl.style.left = left + '%';
             textEl.style.top = top + '%';
             
             document.body.appendChild(textEl);
 
-            // Animation: zoom in cực mạnh từ xa lao tới
             let scale = 0.05;
             let opacity = 0;
-            const duration = 1650; // 1.65 giây
+            const duration = 1650;
             const startTime = Date.now();
 
             function animate() {
@@ -508,12 +483,10 @@
                 const progress = Math.min(elapsed / duration, 1);
 
                 if (progress < 0.35) {
-                    // Zoom in cực mạnh và fade in nhanh (35% đầu)
                     const zoomProgress = progress / 0.35;
-                    scale = 0.05 + (2.0 - 0.05) * zoomProgress; // Zoom tới 2.0
+                    scale = 0.05 + (2.0 - 0.05) * zoomProgress;
                     opacity = zoomProgress;
                 } else {
-                    // Fade out nhanh (65% sau)
                     scale = 2.0;
                     const fadeProgress = (progress - 0.35) / 0.65;
                     opacity = 1 - fadeProgress;
@@ -532,12 +505,10 @@
             animate();
         }
 
-        // Tạo nhiều text liên tục với tần suất cao
         let textInterval;
         
         function startTextEffects() {
             textInterval = setInterval(() => {
-                // Tạo 2-3 text mỗi lần
                 const count = Math.random() > 0.3 ? 3 : 2;
                 for (let i = 0; i < count; i++) {
                     setTimeout(() => createTextEffect(), i * 100);
@@ -552,24 +523,20 @@
         function startFireworks() {
             if (!animationStarted) {
                 animationStarted = true;
-                // Bắt đầu tạo text effects
                 startTextEffects();
             }
         }
 
         function animate() {
-            // Làm mờ canvas (tạo vệt)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Chỉ bắn pháo hoa khi đã unlock
             if (isUnlocked && Math.random() < 0.08) {
                 const x = Math.random() * canvas.width;
-                const targetY = canvas.height * 0.2 + Math.random() * canvas.height * 0.3;
+                const targetY = canvas.height * 0.1 + Math.random() * canvas.height * 0.25;
                 fireworks.push(new Firework(x, targetY));
             }
 
-            // Cập nhật và vẽ pháo hoa
             fireworks.forEach((firework, index) => {
                 firework.update();
                 firework.draw();
